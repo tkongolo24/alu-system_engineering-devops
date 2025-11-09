@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# 0-custom_http_response_header
+# Configures a brand new Ubuntu machine with Nginx and a custom HTTP header
+
+# Install Nginx if not installed
+apt-get update -y
+apt-get install nginx -y
+
+# Ensure the server has a proper hostname
+# Replace with your hostname if needed, e.g., 03-web-01
+# hostnamectl set-hostname 03-web-01
+
+# Backup default config
+cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default.bak
+
+# Add the custom header to the default server block
+# This ensures it works for all responses
+sed -i '/server_name _;/a \    add_header X-Served-By $hostname;' /etc/nginx/sites-available/default
+
+# Test Nginx configuration
+nginx -t
+
+# Reload Nginx to apply changes
+systemctl reload nginx
+
