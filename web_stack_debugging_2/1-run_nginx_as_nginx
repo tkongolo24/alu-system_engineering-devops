@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Configure Nginx to run as nginx user on port 8080
+
+# Create nginx user if it doesn't exist
+id -u nginx &>/dev/null || useradd -r -s /bin/false nginx
+
+# Update nginx.conf to run as nginx user
+sed -i 's/^user .*/user nginx;/' /etc/nginx/nginx.conf
+
+# Create a clean default config for port 8080
+cat > /etc/nginx/sites-available/default << 'NGINX_DEFAULT'
+server {
+    listen 8080 default_server;
+    listen [::]:8080 default_server;
+    
+    root /var/www/html;
+    index index.html index.htm;
+    
+    server_name _;
+    
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+NGINX_DEFAULT
+
+# Copy to sites-enabled
+cp /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+
+# Fix permissions
+chmod 755 /etc/nginx/nginx.conf
+chown -R nginx:nginx /var/log/nginx
+chown -R nginx:nginx /var/lib/nginx
+mkdir -p /run/nginx
+chown nginx:nginx /run/nginx
+
+# Update PID location
+sed -i '/^pid/d' /etc/nginx/nginx.conf
+sed -i '1a pid /run/nginx/nginx.pid;' /etc/nginx/nginx.conf
+
+# Kill any running nginx
+pkill -f nginx
+
+# Start nginx
+/usr/sbin/nginx
