@@ -38,8 +38,9 @@ chown nginx:nginx /run/nginx
 sed -i '/^pid/d' /etc/nginx/nginx.conf
 sed -i '1a pid /run/nginx/nginx.pid;' /etc/nginx/nginx.conf
 
-# Kill any running nginx
-pkill -f nginx
+# Kill any running nginx using a safer method
+service nginx stop 2>/dev/null || true
+killall nginx 2>/dev/null || true
 
 # Start nginx
-/usr/sbin/nginx
+service nginx start
