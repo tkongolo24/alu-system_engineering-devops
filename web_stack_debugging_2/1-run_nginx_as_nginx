@@ -4,8 +4,8 @@
 # Create nginx user if it doesn't exist
 id -u nginx &>/dev/null || useradd -r -s /bin/false nginx
 
-# Update nginx.conf to run as nginx user
-sed -i 's/^user .*/user nginx;/' /etc/nginx/nginx.conf
+# Remove user directive from nginx.conf (not needed when running as nginx)
+sed -i 's/^user /#user /' /etc/nginx/nginx.conf
 
 # Create a clean default config for port 8080
 cat > /etc/nginx/sites-available/default << 'NGINX_DEFAULT'
@@ -24,23 +24,19 @@ server {
 }
 NGINX_DEFAULT
 
-# Copy to sites-enabled
 cp /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
-# Fix permissions
-chmod 755 /etc/nginx/nginx.conf
-chown -R nginx:nginx /var/log/nginx
-chown -R nginx:nginx /var/lib/nginx
+# Fix permissions for nginx user
+chown -R nginx:nginx /var/log/nginx /var/lib/nginx /etc/nginx
 mkdir -p /run/nginx
-chown nginx:nginx /run/nginx
+chown -R nginx:nginx /run/nginx
 
 # Update PID location
 sed -i '/^pid/d' /etc/nginx/nginx.conf
-sed -i '1a pid /run/nginx/nginx.pid;' /etc/nginx/nginx.conf
+sed -i '1i pid /run/nginx/nginx.pid;' /etc/nginx/nginx.conf
 
-# Kill any running nginx using a safer method
-service nginx stop 2>/dev/null || true
-killall nginx 2>/dev/null || true
+# Stop any running nginx
+service nginx stop 2>/dev/null || killall nginx 2>/dev/null || true
 
-# Start nginx
-service nginx start
+# Start nginx as nginx user
+sudo -u nginx /usr/sbin/nginx
