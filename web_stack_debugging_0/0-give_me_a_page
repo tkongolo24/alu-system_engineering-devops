@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Fix Apache to serve Hello Holberton page
+
+# Start Apache service
+service apache2 start
+
+# Create the Hello Holberton page
+echo "Hello Holberton" > /var/www/html/index.html
